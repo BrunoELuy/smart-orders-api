@@ -35,7 +35,7 @@ def register():
 def login():
     data = request.json
 
-    user = User.query.filter_by(email=data["emaiil"]).first()
+    user = User.query.filter_by(email=data["email"]).first()
 
     if not user or not bcrypt.check_password_hash(
         user.password_hash, data["password"]
@@ -45,9 +45,9 @@ def login():
     token = jwt.encode(
         {
             "user_id": user.id,
-            "exp": datetime.datetime.now(datetime.timezone.utc)() + datetime.timedelta(hours=1)
+            "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1)
         },
-        current_app.config["SECRET KEY"],
+        current_app.config["SECRET_KEY"],
         algorithm="HS256"
     )
 
