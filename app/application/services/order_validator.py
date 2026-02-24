@@ -11,3 +11,12 @@ def validate_order_items(data):
 
         if "product_name" not in item or not isinstance(item["product_name"], str) or not item["product_name"].strip():
             raise ValueError("Invalid product name")
+        
+def validate_order_ownership(order, current_user):
+    if order is None:
+        return {"message": "Order doesn't exist"}, 404
+    # Necessário implementar caso a ordem nao exista 403
+    if order.user_id != current_user.id:
+        return {"message": "User don't have this order"}, 403
+    
+    return None

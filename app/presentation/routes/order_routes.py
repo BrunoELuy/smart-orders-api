@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import null
-from app.application.services.order_validator import validate_order_items
+from app.application.services.order_validator import validate_order_items, validate_order_ownership
 from app.infrastructure.database.db import db
 from app.infrastructure.database.models import Order, OrderItem
 from app.infrastructure.security.auth_middleware import token_required
@@ -48,28 +48,47 @@ def create_order(current_user):
 def list_orders(current_user):
     orders_user = Order.query.filter_by(user_id=current_user.id).all()
 
+    orders_serialized = [
+        {
+            "id": order.id,
+            "total_amount": order.total_amount
+        }
+        for order in orders_user
+    ]
+
     return jsonify({
-        "message": "Authenticated",
         "user_id": current_user.id,
         "email": current_user.email,
-        "orders": orders_user
+        "orders": orders_serialized
     })
 
-@order_bp.route("/orders/<id>", methods=["GET"])
+@order_bp.route("/orders/<int:order_id>", methods=["GET"])
 @token_required
 def list_itens_in_orders(current_user, order_id):
-    asking_order = Order.query.get(id=order_id)
-    if asking_order is null:
-        return jsonify({"message": "Order doesn't exist"}), 403
-    # Necessário implementar caso a ordem nao exista 403
-    if asking_order.user_id != current_user.id:
-        return jsonify({"message": "User don't have this order"}), 403
-    itens = OrderItem.query.get(order_id=asking_order.id).all()
+
+    asking_order = Order.query.get(order_id)
+
+    validation_error = validate_order_ownership(asking_order, current_user)
+    if validation_error:
+        return jsonify(validation_error[0]), validation_error[1]
+
+    itens = OrderItem.query.filter_by(order_id=asking_order.id).all()
+    
+    itens_serialized = [
+        {
+            "product_name": item.product_name,
+            "quantity": item.quantity,
+            "unit_price": item.unit_price
+        }
+        for item in itens
+    ]
+
     return jsonify({
         "id": asking_order.id,
         "total_amount": asking_order.total_amount,
-        "items": [itens]
+        "items": itens_serialized
     })
+
 
 @order_bp.route("/orders/<int:order_id>/items", methods=["POST"])
 def add_item(order_id):
