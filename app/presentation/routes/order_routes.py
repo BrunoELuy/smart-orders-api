@@ -46,12 +46,30 @@ def create_order(current_user):
 @order_bp.route("/orders", methods=["GET"])
 @token_required
 def list_orders(current_user):
+    orders_user = Order.query.filter_by(user_id=current_user.id).all()
+
     return jsonify({
         "message": "Authenticated",
         "user_id": current_user.id,
-        "email": current_user.email
+        "email": current_user.email,
+        "orders": orders_user
     })
 
+@order_bp.route("/orders/<id>", methods=["GET"])
+@token_required
+def list_itens_in_orders(current_user, order_id):
+    asking_order = Order.query.get(id=order_id)
+    if asking_order is null:
+        return jsonify({"message": "Order doesn't exist"}), 403
+    # Necessário implementar caso a ordem nao exista 403
+    if asking_order.user_id != current_user.id:
+        return jsonify({"message": "User don't have this order"}), 403
+    itens = OrderItem.query.get(order_id=asking_order.id).all()
+    return jsonify({
+        "id": asking_order.id,
+        "total_amount": asking_order.total_amount,
+        "items": [itens]
+    })
 
 @order_bp.route("/orders/<int:order_id>/items", methods=["POST"])
 def add_item(order_id):
