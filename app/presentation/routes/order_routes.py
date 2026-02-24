@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from app.infrastructure.database.db import db
 from app.infrastructure.database.models import Order, OrderItem
+from app.infrastructure.security.auth_middleware import token_required
 
 order_bp = Blueprint("orders", __name__)
 
@@ -13,6 +14,17 @@ def create_order():
     db.session.commit()
 
     return jsonify({"order_id": order.id}), 201
+
+
+@order_bp.route("/orders", methods=["GET"])
+@token_required
+def list_orders(current_user):
+    return jsonify({
+        "message": "Authenticated",
+        "user_id": current_user.id,
+        "email": current_user.email
+    })
+
 
 @order_bp.route("/orders/<int:order_id>/items", methods=["POST"])
 def add_item(order_id):
