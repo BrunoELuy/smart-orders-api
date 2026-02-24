@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import null
+from app.application.services.order_validator import validate_order_items
 from app.infrastructure.database.db import db
 from app.infrastructure.database.models import Order, OrderItem
 from app.infrastructure.security.auth_middleware import token_required
@@ -11,16 +12,10 @@ order_bp = Blueprint("orders", __name__)
 def create_order(current_user):
     data = request.json
 
-    if "items" not in data or not isinstance(data["items"], list) or not data["items"]:
-        return jsonify({"message": "Data error"}), 422
-    else:
-        for item_data in data["items"]:
-            if "quantity" not in item_data or not isinstance(item_data["quantity"], int) or not item_data["quantity"]:
-                return jsonify({"message": "Data error"}), 422
-            elif "unit_price" not in item_data or not isinstance(item_data["unit_price"], (int, float)) or not item_data["unit_price"]:
-                return jsonify({"message": "Data error"}), 422
-            elif "product_name" not in item_data or not isinstance(item_data["product_name"], str) or not item_data["product_name"]:
-                return jsonify({"message": "Data error"}), 422
+    try:
+        validate_order_items(data)
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 422
 
     order = Order(user_id=current_user.id)
     db.session.add(order)
