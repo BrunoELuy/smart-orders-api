@@ -124,8 +124,6 @@ def delete_order(current_user, order_id):
     validation_error = validate_order_ownership(order, current_user)
     if validation_error:
         return jsonify(validation_error[0]), validation_error[1]
-    
-    OrderItem.query.filter_by(order_id=order.id).delete()
 
     db.session.delete(order)
     db.session.commit()
