@@ -114,3 +114,20 @@ def add_item(order_id):
     db.session.commit()
 
     return jsonify({"message": "Item added", "total": total})
+
+@order_bp.route("/orders/<int:order_id>", methods=["DELETE"])
+@token_required
+def delete_order(current_user, order_id):
+
+    order = Order.query.get(order_id)
+
+    validation_error = validate_order_ownership(order, current_user)
+    if validation_error:
+        return jsonify(validation_error[0]), validation_error[1]
+    
+    OrderItem.query.filter_by(order_id=order.id).delete()
+
+    db.session.delete(order)
+    db.session.commit()
+
+    return jsonify({"message": "Order deleted sucessfully"}), 200
