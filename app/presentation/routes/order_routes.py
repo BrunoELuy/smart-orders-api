@@ -91,6 +91,7 @@ def list_itens_in_orders(current_user, order_id):
 
 
 @order_bp.route("/orders/<int:order_id>/items", methods=["POST"])
+@token_required
 def add_item(order_id):
     data = request.json
 
