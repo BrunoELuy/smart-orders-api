@@ -68,3 +68,20 @@ def create_order(current_user, data):
     db.session.commit()
 
     return {"message": "Item added", "total": total_amount, "order_id": order.id}, 201
+
+def list_orders(current_user):
+    orders_user = Order.query.filter_by(user_id=current_user.id).all()
+
+    orders_serialized = [
+        {
+            "id": order.id,
+            "total_amount": order.total_amount
+        }
+        for order in orders_user
+    ]
+
+    return {
+        "user_id": current_user.id,
+        "email": current_user.email,
+        "orders": orders_serialized
+    }, 200

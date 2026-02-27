@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from sqlalchemy import null
 from app.application.services.order_service import update_order
 from app.application.services.order_service import create_order as create_order_service
+from app.application.services.order_service import list_orders as list_orders_service
 from app.application.validators.order_validator import validate_order_items, validate_order_ownership
 from app.infrastructure.database.db import db
 from app.infrastructure.database.models import Order, OrderItem
@@ -21,21 +22,8 @@ def create_order(current_user):
 @order_bp.route("/orders", methods=["GET"])
 @token_required
 def list_orders(current_user):
-    orders_user = Order.query.filter_by(user_id=current_user.id).all()
-
-    orders_serialized = [
-        {
-            "id": order.id,
-            "total_amount": order.total_amount
-        }
-        for order in orders_user
-    ]
-
-    return jsonify({
-        "user_id": current_user.id,
-        "email": current_user.email,
-        "orders": orders_serialized
-    })
+    result, status = list_orders_service(current_user)
+    return jsonify(result), status
 
 @order_bp.route("/orders/<int:order_id>", methods=["GET"])
 @token_required
