@@ -37,3 +37,34 @@ def update_order(data, current_user, order_id):
 
     db.session.commit()
     return {"message": "Order updated succesfully", "total": total_amount}, 200
+
+def create_order(current_user, data):
+    try:
+        validate_order_items(data)
+    except ValueError as e:
+        return {"error": str(e)}, 422
+    
+    order = Order(user_id=current_user.id)
+
+    total_amount = 0
+
+    for item_data in data["items"]:
+        item_quantity = item_data["quantity"]
+        item_price = item_data["unit_price"]
+        item_amount = item_quantity * item_price
+        total_amount += item_amount
+
+        new_item = OrderItem(
+            product_name=item_data["product_name"],
+            quantity=item_quantity,
+            unit_price=item_price,
+        )
+
+    order.items.append(new_item)
+
+    order.total_amount = total_amount
+
+    db.session.add(order)
+    db.session.commit()
+
+    return {"message": "Item added", "total": total_amount, "order_id": order.id}, 201

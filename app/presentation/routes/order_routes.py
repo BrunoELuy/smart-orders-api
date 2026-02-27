@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import null
 from app.application.services.order_service import update_order
+from app.application.services.order_service import create_order as create_order_service
 from app.application.validators.order_validator import validate_order_items, validate_order_ownership
 from app.infrastructure.database.db import db
 from app.infrastructure.database.models import Order, OrderItem
@@ -13,35 +14,8 @@ order_bp = Blueprint("orders", __name__)
 def create_order(current_user):
     data = request.json
 
-    try:
-        validate_order_items(data)
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 422
-
-    order = Order(user_id=current_user.id)
-    db.session.add(order)
-    db.session.flush()
-
-    total_amount = 0
-    
-    for item_data in data["items"]:
-        item_quantity = item_data["quantity"]
-        item_price = item_data["unit_price"]
-        item_amount = item_quantity * item_price
-        total_amount += item_amount
-        item = OrderItem(
-            order_id=order.id,
-            product_name=item_data["product_name"],
-            quantity=item_data["quantity"],
-            unit_price=item_data["unit_price"],
-        )
-        db.session.add(item)
-
-    order.total_amount = total_amount
-
-    db.session.commit()
-
-    return jsonify({"message": "Item added", "total": total_amount, "order_id": order.id}), 201
+    result, status = create_order_service(current_user, data)
+    return jsonify(result), status
 
 
 @order_bp.route("/orders", methods=["GET"])
