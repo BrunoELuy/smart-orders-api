@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from sqlalchemy import null
-from app.application.services.order_service import update_order
-from app.application.services.order_service import create_order as create_order_service
-from app.application.services.order_service import list_orders as list_orders_service
-from app.application.services.order_service import list_itens_in_orders as list_itens_in_orders_services
+from app.application.services.order_service import (
+    update_order, 
+    create_order as create_order_service, 
+    list_orders as list_orders_service, 
+    list_itens_in_orders as list_itens_in_orders_services, 
+    add_item as add_item_service)
 from app.application.validators.order_validator import validate_order_items, validate_order_ownership
 from app.infrastructure.database.db import db
 from app.infrastructure.database.models import Order, OrderItem
@@ -26,38 +28,22 @@ def list_orders(current_user):
     result, status = list_orders_service(current_user)
     return jsonify(result), status
 
+
 @order_bp.route("/orders/<int:order_id>", methods=["GET"])
 @token_required
 def list_itens_in_orders(current_user, order_id):
-
     result, status = list_itens_in_orders_services(current_user, order_id)
     return jsonify(result), status
 
 
 @order_bp.route("/orders/<int:order_id>/items", methods=["POST"])
 @token_required
-def add_item(order_id):
+def add_item(current_user, order_id):
     data = request.json
 
-    item = OrderItem(
-        order_id=order_id,
-        product_name=data["product_name"],
-        quantity=data["quantity"],
-        unit_price=data["unit_price"],
-    )
+    result, status = add_item_service(current_user, order_id, data)
+    return jsonify(result), status
 
-    db.session.add(item)
-
-    items = OrderItem.query.filter_by(order_id=order_id).all()
-    total = sum(i.quantity * i.unit_price for i in items)
-    total += data["quantity"] * data["unit_price"]
-
-    order = Order.query.get(order_id)
-    order.total_amount = total
-
-    db.session.commit()
-
-    return jsonify({"message": "Item added", "total": total})
 
 @order_bp.route("/orders/<int:order_id>", methods=["DELETE"])
 @token_required
