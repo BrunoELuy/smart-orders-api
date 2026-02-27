@@ -136,3 +136,19 @@ def add_item(current_user, order_id, data):
     db.session.commit()
 
     return {"message": "Item added", "total": order.total_amount}, 200
+
+def delete_order(current_user, order_id):
+
+    order = Order.query.get(order_id)
+
+    if not order:
+        return {"error": "Order not found"}, 404
+
+    validation_error = validate_order_ownership(order, current_user)
+    if validation_error:
+        return validation_error[0], validation_error[1]
+
+    db.session.delete(order)
+    db.session.commit()
+
+    return {"message": "Order deleted successfully"}, 200

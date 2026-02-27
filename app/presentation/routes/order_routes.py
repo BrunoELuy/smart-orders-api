@@ -5,7 +5,8 @@ from app.application.services.order_service import (
     create_order as create_order_service, 
     list_orders as list_orders_service, 
     list_itens_in_orders as list_itens_in_orders_services, 
-    add_item as add_item_service)
+    add_item as add_item_service,
+    delete_order as delete_order_service)
 from app.application.validators.order_validator import validate_order_items, validate_order_ownership
 from app.infrastructure.database.db import db
 from app.infrastructure.database.models import Order, OrderItem
@@ -16,6 +17,7 @@ order_bp = Blueprint("orders", __name__)
 @order_bp.route("/orders", methods=["POST"])
 @token_required
 def create_order(current_user):
+
     data = request.json
 
     result, status = create_order_service(current_user, data)
@@ -25,6 +27,7 @@ def create_order(current_user):
 @order_bp.route("/orders", methods=["GET"])
 @token_required
 def list_orders(current_user):
+
     result, status = list_orders_service(current_user)
     return jsonify(result), status
 
@@ -32,6 +35,7 @@ def list_orders(current_user):
 @order_bp.route("/orders/<int:order_id>", methods=["GET"])
 @token_required
 def list_itens_in_orders(current_user, order_id):
+
     result, status = list_itens_in_orders_services(current_user, order_id)
     return jsonify(result), status
 
@@ -39,6 +43,7 @@ def list_itens_in_orders(current_user, order_id):
 @order_bp.route("/orders/<int:order_id>/items", methods=["POST"])
 @token_required
 def add_item(current_user, order_id):
+
     data = request.json
 
     result, status = add_item_service(current_user, order_id, data)
@@ -49,16 +54,8 @@ def add_item(current_user, order_id):
 @token_required
 def delete_order(current_user, order_id):
 
-    order = Order.query.get(order_id)
-
-    validation_error = validate_order_ownership(order, current_user)
-    if validation_error:
-        return jsonify(validation_error[0]), validation_error[1]
-
-    db.session.delete(order)
-    db.session.commit()
-
-    return jsonify({"message": "Order deleted sucessfully"}), 200
+    result, status = delete_order_service(current_user, order_id)
+    return jsonify(result), status
 
 @order_bp.route("/orders/<int:order_id>", methods=["PUT"])
 @token_required
