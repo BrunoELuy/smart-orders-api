@@ -61,7 +61,7 @@ def create_order(current_user, data):
             unit_price=item_price,
         )
 
-    order.items.append(new_item)
+        order.items.append(new_item)
 
     order.total_amount = total_amount
 
