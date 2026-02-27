@@ -85,3 +85,27 @@ def list_orders(current_user):
         "email": current_user.email,
         "orders": orders_serialized
     }, 200
+
+def list_itens_in_orders(current_user, order_id):
+    asking_order = Order.query.get(order_id)
+    if not asking_order:
+        return {"error": "Order not found"}, 404
+
+    validation_error = validate_order_ownership(asking_order, current_user)
+    if validation_error:
+        return validation_error[0], validation_error[1]
+    
+    itens_serialized = [
+        {
+            "product_name": item.product_name,
+            "quantity": item.quantity,
+            "unit_price": item.unit_price
+        }
+        for item in asking_order.items
+    ]
+    
+    return {
+        "id": asking_order.id,
+        "total_amount": asking_order.total_amount,
+        "items": itens_serialized
+    }, 200
