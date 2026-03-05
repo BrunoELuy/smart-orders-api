@@ -17,3 +17,10 @@ def app():
 @pytest.fixture
 def client(app):
     return app.test_client()
+
+
+@pytest.fixture
+def db_session(app):
+    with app.app_context():
+        yield db.session
+        db.session.rollback()
