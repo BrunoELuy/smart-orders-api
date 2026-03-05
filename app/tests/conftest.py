@@ -20,7 +20,14 @@ def client(app):
 
 
 @pytest.fixture
-def db_session(app):
+def test_user(app):
     with app.app_context():
-        yield db.session
-        db.session.rollback()
+        user = User(
+            email="test@email.com",
+            password_hash="123"
+        )
+
+        db.session.add(user)
+        db.session.commit()
+
+        return user
