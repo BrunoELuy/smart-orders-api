@@ -31,3 +31,18 @@ def test_user(app):
         db.session.commit()
 
         return user
+
+
+@pytest.fixture
+def auth_token(client, test_user):
+
+    login_data = {
+        "email": "test@email.com",
+        "password": "123"
+    }
+
+    response = client.post("/login", json=login_data)
+
+    token = response.json["token"]
+
+    return token
