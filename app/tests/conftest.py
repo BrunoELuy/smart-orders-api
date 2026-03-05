@@ -1,3 +1,4 @@
+import bcrypt
 import pytest
 from app import create_app
 from app.infrastructure.database.db import db
@@ -22,9 +23,12 @@ def client(app):
 @pytest.fixture
 def test_user(app):
     with app.app_context():
+
+        password_hash = bcrypt.generate_password_hash("123").decode("utf-8")
+
         user = User(
             email="test@email.com",
-            password_hash="123"
+            password_hash=password_hash
         )
 
         db.session.add(user)
