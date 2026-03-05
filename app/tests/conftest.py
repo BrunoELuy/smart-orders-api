@@ -50,3 +50,11 @@ def auth_token(client, test_user):
     token = response.json["token"]
 
     return token
+
+
+@pytest.fixture
+def auth_headers(auth_token):
+
+    return {
+        "Authorization": f"Bearer {auth_token}"
+    }
